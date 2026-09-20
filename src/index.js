@@ -1,62 +1,46 @@
-// OmniCache-Engine - Production Engine Entrypoint
+/**
+ * OmniCache-Engine - Production In-Memory Cache REST API Server
+ * Author: Ali Nurettin Demir (@alinurettin)
+ */
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
+const { OmniCacheEngine } = require('./engine');
 
+const CAPACITY = parseInt(process.env.CACHE_CAPACITY, 10) || 50;
+const MAX_BYTES = parseInt(process.env.CACHE_MAX_BYTES, 10) || (10 * 1024 * 1024); // 10MB
+const cache = new OmniCacheEngine({ capacity: CAPACITY, maxBytes: MAX_BYTES });
 
-const LRUCache = require('./engine');
-const cache = new LRUCache(1000);
-function handleApi(req, res, pathname, body) {
-  if (req.method === 'POST' && pathname === '/api/cache/set') {
-    try {
-      const data = JSON.parse(body || '{}');
-      cache.set(data.key, data.value, data.ttlMs || 0);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, key: data.key, size: cache.size() }));
-    } catch(e) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ error: e.message }));
-    }
-  }
-  if (req.method === 'GET' && pathname === '/api/cache/get') {
-    const key = require('url').parse(req.url, true).query.key;
-    const val = cache.get(key);
-    if (val === null) {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ found: false, error: 'Key not found or expired' }));
-    }
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ found: true, key, value: val }));
-  }
-  return false;
-}
-
+// Pre-seed with some sample entries
+cache.set('session:user_101', { name: 'Alice', role: 'admin', lastLogin: '2026-09-20' }, 300000);
+cache.set('config:rate_limit', { max: 100, window: '60s' }, 0);
+cache.set('temp:token_auth', 'jwt-token-sample-xyz', 60000);
 
 const PORT = parseInt(process.env.PORT, 10) || 6005;
 const publicDir = path.join(__dirname, '..', 'public');
 const startTime = Date.now();
 
 function requestHandler(req, res) {
-  const parsed = url.parse(req.url, true);
-  const pathname = parsed.pathname;
+  const reqUrl = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
+  const pathname = reqUrl.pathname;
 
+  // CORS
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
+      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
     });
     return res.end();
   }
 
-  // Aggregate body
   let body = '';
   req.on('data', chunk => body += chunk);
   req.on('end', () => {
-    // 1. Health Endpoint
+    // 1. Health Status
     if (pathname === '/api/health') {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       return res.end(JSON.stringify({
         status: 'UP',
         service: 'OmniCache-Engine',
@@ -65,52 +49,94 @@ function requestHandler(req, res) {
       }));
     }
 
-    // 2. Stats Endpoint
+    // 2. Stats & Telemetry
     if (pathname === '/api/stats') {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       return res.end(JSON.stringify({
         success: true,
         service: 'OmniCache-Engine',
-        category: 'Caching & Storage',
-        status: 'OPTIMAL',
-        uptimeSeconds: Math.floor((Date.now() - startTime) / 1000)
+        stats: cache.getStats(),
+        chain: cache.getLRUOrder()
       }));
     }
 
-    // 3. Custom Domain API
-    if (typeof handleApi === 'function') {
-      const handled = handleApi(req, res, pathname, body);
-      if (handled !== false) return;
+    // 3. GET Key (/api/cache/:key)
+    if (req.method === 'GET' && pathname.startsWith('/api/cache/')) {
+      const key = decodeURIComponent(pathname.replace('/api/cache/', ''));
+      const val = cache.get(key);
+      if (val === null) {
+        res.writeHead(404, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'X-Cache-Status': 'MISS'
+        });
+        return res.end(JSON.stringify({ found: false, error: 'Key not found or expired', key }));
+      }
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'X-Cache-Status': 'HIT'
+      });
+      return res.end(JSON.stringify({ found: true, key, value: val }));
     }
 
-    // 4. Static Asset Delivery
-    let filePath = path.join(publicDir, pathname === '/' ? 'index.html' : pathname);
-    fs.stat(filePath, (err, stats) => {
-      if (!err && stats.isFile()) {
-        const ext = path.extname(filePath);
-        const mime = ext === '.html' ? 'text/html; charset=utf-8' : (ext === '.css' ? 'text/css' : 'application/javascript');
-        res.writeHead(200, { 'Content-Type': mime, 'Access-Control-Allow-Origin': '*' });
-        fs.createReadStream(filePath).pipe(res);
-      } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Endpoint Not Found', path: pathname }));
+    // 4. SET Key (/api/cache)
+    if (req.method === 'POST' && pathname === '/api/cache') {
+      try {
+        const parsed = JSON.parse(body || '{}');
+        const resObj = cache.set(parsed.key, parsed.value, parsed.ttlMs || 0);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ success: true, result: resObj }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: e.message }));
       }
-    });
+    }
+
+    // 5. DELETE Key (/api/cache/:key)
+    if (req.method === 'DELETE' && pathname.startsWith('/api/cache/')) {
+      const key = decodeURIComponent(pathname.replace('/api/cache/', ''));
+      const deleted = cache.delete(key);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      return res.end(JSON.stringify({ success: true, deleted, key }));
+    }
+
+    // 6. CLEAR Cache
+    if (req.method === 'POST' && pathname === '/api/cache/clear') {
+      cache.clear();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      return res.end(JSON.stringify({ success: true, message: 'Cache flushed successfully' }));
+    }
+
+    // 7. Static Dashboard UI
+    let filePath = path.join(publicDir, pathname === '/' ? 'index.html' : pathname);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ext = path.extname(filePath).toLowerCase();
+      const mimeTypes = {
+        '.html': 'text/html; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
+        '.js': 'application/javascript; charset=utf-8',
+        '.json': 'application/json; charset=utf-8'
+      };
+      res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'text/plain' });
+      return res.end(fs.readFileSync(filePath));
+    }
+
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Endpoint not found' }));
   });
 }
 
-function startServer(port = PORT, callback) {
-  const s = http.createServer(requestHandler);
-  s.listen(port, () => {
-    if (callback) callback(s);
-  });
-  return s;
+function startServer(portToUse = PORT, callback) {
+  const server = http.createServer(requestHandler);
+  server.listen(portToUse, callback);
+  return server;
 }
 
 if (require.main === module) {
   startServer(PORT, () => {
-    console.log('OmniCache-Engine server running on port ' + PORT);
+    console.log(`💾 OmniCache-Engine live at http://localhost:${PORT}`);
   });
 }
 
-module.exports = { startServer, requestHandler };
+module.exports = { startServer, cache };

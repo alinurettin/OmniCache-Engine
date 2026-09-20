@@ -1,36 +1,81 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OmniCache-Engine | Operational Studio</title>
+  <title>OmniCache-Engine | In-Memory Key-Value Store</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="header">
     <div class="brand">
-      <span class="logo">⚡</span>
+      <span class="logo">💾</span>
       <div>
         <h1>OmniCache-Engine</h1>
-        <span class="sub">High-Performance In-Memory Key-Value Store</span>
+        <span class="sub">Sub-Millisecond In-Memory Store with O(1) Doubly-Linked List LRU</span>
       </div>
     </div>
-    <div class="status-badge">🟢 Operational Active</div>
+    <div class="status-badge">🟢 Engine Optimal</div>
   </header>
+
   <main class="main">
-    <div class="card">
-      <h2>Engine Overview</h2>
-      <p>Sub-millisecond in-memory cache engine with LRU eviction, TTL expiration policies, snapshot persistence, and REST API.</p>
-      <div class="metrics-row" id="metricsRow">
-        <div class="metric"><span class="lbl">STATUS</span><span class="val">HEALTHY</span></div>
-        <div class="metric"><span class="lbl">LATENCY</span><span class="val">1.2 ms</span></div>
-        <div class="metric"><span class="lbl">THROUGHPUT</span><span class="val">1,250 req/s</span></div>
+    <!-- Telemetry Cards -->
+    <div class="metrics-grid">
+      <div class="metric"><span class="lbl">CACHED ITEMS</span><span class="val green" id="mCount">0 / 50</span></div>
+      <div class="metric"><span class="lbl">HIT RATIO</span><span class="val blue" id="mHitRatio">0.0%</span></div>
+      <div class="metric"><span class="lbl">MEMORY USAGE</span><span class="val" id="mMemory">0.00 MB</span></div>
+      <div class="metric"><span class="lbl">TOTAL EVICTIONS</span><span class="val red" id="mEvictions">0</span></div>
+    </div>
+
+    <!-- Live Doubly Linked List LRU Visualizer -->
+    <div class="card chain-card">
+      <div class="chain-header">
+        <h2>Live Doubly-Linked List LRU Eviction Chain</h2>
+        <span class="chain-legend">
+          <span class="mru-tag">Head (MRU)</span> &rarr; ... &rarr; <span class="lru-tag">Tail (LRU)</span>
+        </span>
+      </div>
+      <div class="chain-scroll" id="chainScroll">
+        <div class="empty-state">Cache is currently empty. Insert keys below.</div>
+      </div>
+    </div>
+
+    <!-- Interactive Cache Console -->
+    <div class="card console-card">
+      <h2>Interactive Cache Operations Console</h2>
+      <div class="ops-grid">
+        <!-- SET -->
+        <div class="op-box">
+          <h3>SET Key (Write / Update)</h3>
+          <form id="setForm">
+            <input type="text" id="setKey" placeholder="Key (e.g. user:profile_99)" required>
+            <input type="text" id="setValue" placeholder='Value (e.g. {"name":"Bob", "plan":"pro"})' required>
+            <input type="number" id="setTTL" placeholder="TTL in Milliseconds (0 = no expiry)" value="60000">
+            <button type="submit" class="btn btn-primary">Set Cache Key</button>
+          </form>
+        </div>
+
+        <!-- GET & DELETE -->
+        <div class="op-box">
+          <h3>GET / DELETE Key</h3>
+          <form id="getForm">
+            <input type="text" id="targetKey" placeholder="Key to fetch or delete" required>
+            <div class="btn-group">
+              <button type="submit" class="btn btn-secondary">GET (Read)</button>
+              <button type="button" id="btnDelete" class="btn btn-danger">DELETE</button>
+              <button type="button" id="btnClear" class="btn btn-outline">FLUSH ALL</button>
+            </div>
+          </form>
+          <pre id="outputPre">Result will appear here...</pre>
+        </div>
       </div>
     </div>
   </main>
+
   <footer class="footer">
     <p>OmniCache-Engine &bull; Autonomously engineered by 7-Agent SDLC Factory for <a href="https://github.com/alinurettin/OmniCache-Engine" target="_blank">Ali Nurettin Demir</a></p>
   </footer>
+
   <script src="app.js"></script>
 </body>
 </html>
