@@ -1,4 +1,4 @@
-﻿# ğŸ“ System Architecture Document: OmniCache-Engine
+﻿# 📐 System Architecture Document: OmniCache-Engine
 - **Project:** OmniCache-Engine
 - **Author:** Expert Software Architect
 - **Status:** APPROVED & COMPLETE
