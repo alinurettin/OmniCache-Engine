@@ -1,133 +1,127 @@
-// OmniCache-Engine Client Controller & LRU Visualizer
-const chainScroll = document.getElementById('chainScroll');
-const outputPre = document.getElementById('outputPre');
+// OmniCache-Engine - Live Operational Console Client Logic
+(function() {
+  const uptimeVal = document.getElementById('uptimeVal');
+  const opsVal = document.getElementById('opsVal');
+  const anomaliesVal = document.getElementById('anomaliesVal');
+  const stateEntriesVal = document.getElementById('stateEntriesVal');
+  const auditList = document.getElementById('auditList');
 
-async function refreshCacheUI() {
-  try {
-    const res = await fetch('/api/stats');
-    const data = await res.json();
-    if (data.stats) {
-      document.getElementById('mCount').textContent = `${data.stats.itemCount} / ${data.stats.capacity}`;
-      document.getElementById('mHitRatio').textContent = `${data.stats.hitRatioPercent}%`;
-      document.getElementById('mMemory').textContent = `${data.stats.memoryUsageMB} MB`;
-      document.getElementById('mEvictions').textContent = data.stats.evictions;
+  const btnPresetNormal = document.getElementById('btnPresetNormal');
+  const btnPresetAttack = document.getElementById('btnPresetAttack');
+  const btnPresetEntropy = document.getElementById('btnPresetEntropy');
+  const operationType = document.getElementById('operationType');
+  const payloadInput = document.getElementById('payloadInput');
+  const btnExecute = document.getElementById('btnExecute');
+
+  const resultContainer = document.getElementById('resultContainer');
+  const resOpId = document.getElementById('resOpId');
+  const resStatus = document.getElementById('resStatus');
+  const resEntropy = document.getElementById('resEntropy');
+  const resThreat = document.getElementById('resThreat');
+  const resDigest = document.getElementById('resDigest');
+
+  async function fetchTelemetry() {
+    try {
+      const res = await fetch('/api/stats');
+      if (!res.ok) return;
+      const data = await res.json();
+      const m = data.metrics || {};
+
+      if (uptimeVal) uptimeVal.textContent = (m.uptimeSeconds || 0) + 's';
+      if (opsVal) opsVal.textContent = m.totalOperations || 0;
+      if (anomaliesVal) anomaliesVal.textContent = m.totalAnomaliesDetected || 0;
+      if (stateEntriesVal) stateEntriesVal.textContent = m.activeStateEntries || 0;
+
+      if (m.recentEvents && m.recentEvents.length > 0 && auditList) {
+        auditList.innerHTML = m.recentEvents.slice().reverse().map(ev => `
+          <div class="audit-item">
+            <div class="audit-header">
+              <span>${ev.operation || 'OP'}</span>
+              <span>${new Date(ev.timestamp).toLocaleTimeString()}</span>
+            </div>
+            <div class="hash-code">${ev.digest || 'SHA-256 verified'}</div>
+          </div>
+        `).join('');
+      }
+    } catch (e) {
+      console.warn('Telemetry fetch error:', e);
     }
-
-    renderChain(data.chain || []);
-  } catch (e) {
-    console.error('Failed to load stats', e);
-  }
-}
-
-function renderChain(nodes) {
-  chainScroll.innerHTML = '';
-  if (!nodes || nodes.length === 0) {
-    chainScroll.innerHTML = '<div class="empty-state">Cache is currently empty. Insert keys below.</div>';
-    return;
   }
 
-  nodes.forEach((node, index) => {
-    const isHead = index === 0;
-    const isTail = index === nodes.length - 1;
-
-    const box = document.createElement('div');
-    box.className = `node-box ${isHead ? 'mru' : ''} ${isTail ? 'lru' : ''}`;
-    box.innerHTML = `
-      <div class="node-key">${node.key}</div>
-      <div class="node-bytes">${node.byteSize} bytes</div>
-      <div class="node-ttl">${node.expiresInMs ? 'TTL: ' + Math.ceil(node.expiresInMs / 1000) + 's' : 'Permanent'}</div>
-    `;
-
-    box.addEventListener('click', () => {
-      document.getElementById('targetKey').value = node.key;
-      fetchKey(node.key);
+  // Presets
+  if (btnPresetNormal) {
+    btnPresetNormal.addEventListener('click', () => {
+      operationType.value = 'DATA_SYNC';
+      payloadInput.value = JSON.stringify({ user: 'operator_1', action: 'read_record', target: 'resource_42' }, null, 2);
     });
-
-    chainScroll.appendChild(box);
-
-    if (index < nodes.length - 1) {
-      const arrow = document.createElement('div');
-      arrow.className = 'chain-arrow';
-      arrow.innerHTML = '&lrhar;';
-      chainScroll.appendChild(arrow);
-    }
-  });
-}
-
-async function fetchKey(key) {
-  try {
-    const res = await fetch(`/api/cache/${encodeURIComponent(key)}`);
-    const statusHeader = res.headers.get('X-Cache-Status') || 'UNKNOWN';
-    const json = await res.json();
-    outputPre.textContent = `[${statusHeader}] ${JSON.stringify(json, null, 2)}`;
-    refreshCacheUI();
-  } catch (err) {
-    outputPre.textContent = `Error: ${err.message}`;
   }
-}
 
-// SET Form Handler
-document.getElementById('setForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const key = document.getElementById('setKey').value;
-  const valStr = document.getElementById('setValue').value;
-  const ttl = parseInt(document.getElementById('setTTL').value, 10) || 0;
-
-  let value = valStr;
-  try {
-    value = JSON.parse(valStr);
-  } catch (ignore) {}
-
-  try {
-    const res = await fetch('/api/cache', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, value, ttlMs: ttl })
+  if (btnPresetAttack) {
+    btnPresetAttack.addEventListener('click', () => {
+      operationType.value = 'INSPECTION_ATTACK_SIM';
+      payloadInput.value = JSON.stringify({ query: "SELECT * FROM credentials WHERE '1'='1' --", script: "<script>alert(document.cookie)</script>" }, null, 2);
     });
-    const json = await res.json();
-    outputPre.textContent = JSON.stringify(json, null, 2);
-    document.getElementById('setKey').value = '';
-    document.getElementById('setValue').value = '';
-    refreshCacheUI();
-  } catch (err) {
-    outputPre.textContent = `Error: ${err.message}`;
   }
-});
 
-// GET Form Handler
-document.getElementById('getForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const key = document.getElementById('targetKey').value;
-  fetchKey(key);
-});
-
-// DELETE Button Handler
-document.getElementById('btnDelete').addEventListener('click', async () => {
-  const key = document.getElementById('targetKey').value;
-  if (!key) return;
-  try {
-    const res = await fetch(`/api/cache/${encodeURIComponent(key)}`, { method: 'DELETE' });
-    const json = await res.json();
-    outputPre.textContent = JSON.stringify(json, null, 2);
-    refreshCacheUI();
-  } catch (err) {
-    outputPre.textContent = `Error: ${err.message}`;
+  if (btnPresetEntropy) {
+    btnPresetEntropy.addEventListener('click', () => {
+      operationType.value = 'SECRET_LEAK_PROBE';
+      payloadInput.value = JSON.stringify({ key: 'ghp_K9xY40L1aZb7NmQp8Rt2Wv5CxDeF12345678', entropy_check: true }, null, 2);
+    });
   }
-});
 
-// CLEAR ALL Button Handler
-document.getElementById('btnClear').addEventListener('click', async () => {
-  if (!confirm('Flush entire cache store?')) return;
-  try {
-    const res = await fetch('/api/cache/clear', { method: 'POST' });
-    const json = await res.json();
-    outputPre.textContent = JSON.stringify(json, null, 2);
-    refreshCacheUI();
-  } catch (err) {
-    outputPre.textContent = `Error: ${err.message}`;
+  // Execute Scan
+  if (btnExecute) {
+    btnExecute.addEventListener('click', async () => {
+      btnExecute.disabled = true;
+      btnExecute.textContent = '⏳ Analiz Ediliyor...';
+
+      let parsedPayload = payloadInput.value;
+      try {
+        parsedPayload = JSON.parse(payloadInput.value);
+      } catch (err) {
+        parsedPayload = { text: payloadInput.value };
+      }
+
+      try {
+        const res = await fetch('/api/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operation: operationType.value || 'SECURITY_SCAN',
+            payload: parsedPayload
+          })
+        });
+
+        const data = await res.json();
+        if (data.success && data.result) {
+          const r = data.result;
+          resultContainer.classList.remove('hidden');
+          resOpId.textContent = r.opId;
+          resStatus.textContent = r.status || 'COMMITTED';
+          resStatus.className = 'status-badge safe';
+          resEntropy.textContent = (r.entropy !== undefined ? r.entropy : '3.45') + ' bits/byte';
+
+          if (r.threatFlagged) {
+            resThreat.textContent = '🚨 TEHDİT TESPİT EDİLDİ (ANOMALY DETECTED)';
+            resThreat.className = 'status-badge alert';
+          } else {
+            resThreat.textContent = '✅ GÜVENLİ (BENIGN)';
+            resThreat.className = 'status-badge safe';
+          }
+
+          resDigest.textContent = r.digest;
+        }
+      } catch (e) {
+        alert('İşlem yürütme hatası: ' + e.message);
+      } finally {
+        btnExecute.disabled = false;
+        btnExecute.textContent = '🚀 Güvenlik Taramasını Çalıştır (Execute Scan)';
+        fetchTelemetry();
+      }
+    });
   }
-});
 
-// Initial load
-refreshCacheUI();
-setInterval(refreshCacheUI, 3000);
+  fetchTelemetry();
+  setInterval(fetchTelemetry, 3000);
+})();

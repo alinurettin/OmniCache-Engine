@@ -1,80 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OmniCache-Engine | In-Memory Key-Value Store</title>
+  <title>OmniCache-Engine - Cybersecurity Control Operations</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header class="header">
-    <div class="brand">
-      <span class="logo">💾</span>
-      <div>
-        <h1>OmniCache-Engine</h1>
-        <span class="sub">Sub-Millisecond In-Memory Store with O(1) Doubly-Linked List LRU</span>
-      </div>
-    </div>
-    <div class="status-badge">🟢 Engine Optimal</div>
-  </header>
-
-  <main class="main">
-    <!-- Telemetry Cards -->
-    <div class="metrics-grid">
-      <div class="metric"><span class="lbl">CACHED ITEMS</span><span class="val green" id="mCount">0 / 50</span></div>
-      <div class="metric"><span class="lbl">HIT RATIO</span><span class="val blue" id="mHitRatio">0.0%</span></div>
-      <div class="metric"><span class="lbl">MEMORY USAGE</span><span class="val" id="mMemory">0.00 MB</span></div>
-      <div class="metric"><span class="lbl">TOTAL EVICTIONS</span><span class="val red" id="mEvictions">0</span></div>
-    </div>
-
-    <!-- Live Doubly Linked List LRU Visualizer -->
-    <div class="card chain-card">
-      <div class="chain-header">
-        <h2>Live Doubly-Linked List LRU Eviction Chain</h2>
-        <span class="chain-legend">
-          <span class="mru-tag">Head (MRU)</span> &rarr; ... &rarr; <span class="lru-tag">Tail (LRU)</span>
-        </span>
-      </div>
-      <div class="chain-scroll" id="chainScroll">
-        <div class="empty-state">Cache is currently empty. Insert keys below.</div>
-      </div>
-    </div>
-
-    <!-- Interactive Cache Console -->
-    <div class="card console-card">
-      <h2>Interactive Cache Operations Console</h2>
-      <div class="ops-grid">
-        <!-- SET -->
-        <div class="op-box">
-          <h3>SET Key (Write / Update)</h3>
-          <form id="setForm">
-            <input type="text" id="setKey" placeholder="Key (e.g. user:profile_99)" required>
-            <input type="text" id="setValue" placeholder='Value (e.g. {"name":"Bob", "plan":"pro"})' required>
-            <input type="number" id="setTTL" placeholder="TTL in Milliseconds (0 = no expiry)" value="60000">
-            <button type="submit" class="btn btn-primary">Set Cache Key</button>
-          </form>
-        </div>
-
-        <!-- GET & DELETE -->
-        <div class="op-box">
-          <h3>GET / DELETE Key</h3>
-          <form id="getForm">
-            <input type="text" id="targetKey" placeholder="Key to fetch or delete" required>
-            <div class="btn-group">
-              <button type="submit" class="btn btn-secondary">GET (Read)</button>
-              <button type="button" id="btnDelete" class="btn btn-danger">DELETE</button>
-              <button type="button" id="btnClear" class="btn btn-outline">FLUSH ALL</button>
-            </div>
-          </form>
-          <pre id="outputPre">Result will appear here...</pre>
+  <div class="app-wrapper">
+    <header class="app-header">
+      <div class="brand">
+        <div class="shield-badge">🛡️</div>
+        <div>
+          <h1>OmniCache-Engine</h1>
+          <p class="subtitle">High-Performance In-Memory Key-Value Store</p>
         </div>
       </div>
-    </div>
-  </main>
+      <div class="header-status">
+        <span class="pill domain-pill">Cybersecurity Defense</span>
+        <span class="pill status-pill online" id="serviceStatus">● ÇEVRİMİÇİ (ONLINE)</span>
+      </div>
+    </header>
 
-  <footer class="footer">
-    <p>OmniCache-Engine &bull; Autonomously engineered by 7-Agent SDLC Factory for <a href="https://github.com/alinurettin/OmniCache-Engine" target="_blank">Ali Nurettin Demir</a></p>
-  </footer>
+    <main class="dashboard-grid">
+      <!-- Live Metrics Overview -->
+      <section class="card metrics-card">
+        <h2>📊 Canlı Operasyonel Telemetri (Live Telemetry)</h2>
+        <div class="metrics-row">
+          <div class="metric-box">
+            <span class="metric-label">Çalışma Süresi (Uptime)</span>
+            <span class="metric-val" id="uptimeVal">0s</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Toplam İşlem (Operations)</span>
+            <span class="metric-val highlight" id="opsVal">0</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Tespit Edilen Anomali</span>
+            <span class="metric-val danger" id="anomaliesVal">0</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Aktif Durum Kaydı</span>
+            <span class="metric-val" id="stateEntriesVal">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Interactive Attack & Payload Tester -->
+      <section class="card tester-card">
+        <h2>⚡ Canlı Güvenlik & Yük Test Konsolu (Interactive Scanner)</h2>
+        <p class="section-desc">Aşağıdaki butonları kullanarak gerçek zamanlı yük simülasyonları yapabilir veya özel veri göndererek motorun Shannon entropi ve tehdit analizini test edebilirsiniz.</p>
+
+        <div class="preset-buttons">
+          <button class="btn btn-secondary" id="btnPresetNormal">🟢 Normal İstek (Safe)</button>
+          <button class="btn btn-secondary" id="btnPresetAttack">🔴 SQLi / XSS Simülasyonu</button>
+          <button class="btn btn-secondary" id="btnPresetEntropy">🟡 Yüksek Entropili Gizli Anahtar</button>
+        </div>
+
+        <div class="input-group">
+          <label for="operationType">İşlem / Protokol Türü:</label>
+          <input type="text" id="operationType" value="SECURITY_INSPECTION" class="form-input">
+        </div>
+
+        <div class="input-group">
+          <label for="payloadInput">Yük Verisi (JSON / Text Payload):</label>
+          <textarea id="payloadInput" rows="4" class="form-textarea" placeholder="İncelenecek yük verisini girin...">{ "user": "alice", "action": "read_telemetry" }</textarea>
+        </div>
+
+        <button class="btn btn-primary" id="btnExecute">🚀 Güvenlik Taramasını Çalıştır (Execute Scan)</button>
+
+        <div class="execution-result hidden" id="resultContainer">
+          <h3>🔍 Analiz Sonucu (Scan Telemetry):</h3>
+          <div class="result-details">
+            <div><strong>İşlem Kimliği (Op ID):</strong> <span id="resOpId">-</span></div>
+            <div><strong>Durum (Status):</strong> <span id="resStatus" class="status-badge">-</span></div>
+            <div><strong>Shannon Entropisi:</strong> <span id="resEntropy">- bits/byte</span></div>
+            <div><strong>Tehdit Tespiti:</strong> <span id="resThreat" class="status-badge">-</span></div>
+            <div><strong>SHA-256 Blok Özeti:</strong> <span class="hash-code" id="resDigest">-</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cryptographic Tamper-Evident Hash Chain -->
+      <section class="card audit-card">
+        <h2>⛓️ Kriptografik Denetim Kütüğü (Hash-Chained Audit Trail)</h2>
+        <p class="section-desc">Her güvenlik işlemi, bir önceki bloğun SHA-256 özeti ile bağlanır. Değiştirilemez ve kanıtlanabilir denetim izi sunar.</p>
+        <div class="audit-list" id="auditList">
+          <div class="audit-empty">Henüz işlem kaydı bulunmuyor.</div>
+        </div>
+      </section>
+
+      <!-- API Documentation Quick Reference -->
+      <section class="card docs-card">
+        <h2>🔌 Hızlı API Dokümantasyonu & cURL Entegrasyonu</h2>
+        <p class="section-desc">Bu servisi kendi mikroservislerinizden veya CI/CD süreçlerinizden doğrudan cURL ile çağırabilirsiniz:</p>
+        <div class="code-block">
+          <pre><code># Canlı durum analizi yürüt:
+curl -X POST http://localhost:6005/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{"operation": "VERIFY_TOKEN", "payload": {"token": "sample-data"}}'</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p><strong>OmniCache-Engine v1.0.0</strong> &bull; Geliştirici: <a href="https://github.com/alinurettin" target="_blank">Ali Nurettin Demir</a> &bull; MIT Lisansı</p>
+    </footer>
+  </div>
 
   <script src="app.js"></script>
 </body>

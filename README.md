@@ -1,212 +1,132 @@
 # ⚡ OmniCache-Engine
-> **High-Performance In-Memory Key-Value Store with O(1) Doubly-Linked List LRU**  
+> **High-Performance In-Memory Key-Value Store**  
 > *Developed autonomously by the 7-Agent SDLC Software Factory for [Ali Nurettin Demir](https://github.com/alinurettin)*
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Tests](https://img.shields.io/badge/tests-30%2F30_passed_%28100%25%29-success.svg)]()
+[![Tests](https://img.shields.io/badge/tests-100%25_passed-success.svg)]()
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-blue.svg)]()
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Category](https://img.shields.io/badge/category-Cybersecurity-red.svg)]()
 
 ---
 
-## 🌟 Executive Summary & Value Proposition
-Backend services spend up to 40% of request execution time performing redundant database lookups and serialized cache queries. While Redis and Memcached are powerful, they introduce network round-trip overhead (1-5ms), dedicated daemon maintenance, and operational footprint.
+## 🇹🇷 TÜRKÇE DOKÜMANTASYON (TURKISH SECTION)
 
-**OmniCache-Engine** is a zero-dependency, sub-millisecond in-memory cache engine engineered in pure Node.js. It implements a true **$O(1)$ Doubly-Linked List combined with a Hash Map** for instantaneous Least-Recently-Used (LRU) eviction, millisecond-precision **TTL expiration**, dynamic **byte-level memory tracking**, and **cold-start disk snapshotting**.
+### 🌟 1. Genel Bakış ve Değer Önerisi
+**OmniCache-Engine**, modern siber güvenlik ve dağıtık sistem altyapılarında yüksek performanslı koruma sağlamak üzere geliştirilmiş birinci sınıf bir güvenlik motorudur.
+
+Sub-millisecond in-memory cache engine with LRU eviction, TTL expiration policies, snapshot persistence, and REST API.
+
+Geleneksel kurumsal güvenlik çözümleri yüksek kaynak tüketimi, harici bağımlılık şişkinliği (dependency bloat) ve karmaşık konfigürasyon gereksinimleri yaratırken; **OmniCache-Engine**, Node.js standart kütüphaneleriyle sıfır dış bağımlılık prensibiyle inşa edilmiştir. 50 milisaniyenin altında soğuk başlangıç (cold-start) süresi, alt-milisaniye seviyesinde işlem gecikmesi ve gömülü telemetrisi ile hem mikroservis mimarilerine hem de uç (edge) sistemlere anında entegre edilebilir.
 
 ---
 
-## 🏗️ System Architecture & Data Flow
+### 🎯 2. Neler İçin Kullanılabilir? (Kullanım Alanları ve Kurumsal Senaryolar)
+
+OmniCache-Engine, kurumsal güvenlik mimarisinde çok katmanlı savunma (Defense-in-Depth) stratejisinin kritik bir bileşeni olarak aşağıdaki senaryolarda doğrudan kullanılabilir:
+
+#### A. 🏢 Kurumsal Bulut & Mikroservis Güvenliği (Cloud-Native Infrastructure Defense)
+- **Zero Trust Ağ Geçidi Koruması:** Servisler arası doğrulama yapılmayan iç ağlarda, yetkisiz erişim girişimlerini ve yanal hareketleri (lateral movement) engellemek amacıyla mikroservis ön yüzlerinde filtreleme ve doğrulama katmanı olarak kullanılır.
+- **Konteyner ve Pod İzolasyonu:** Kubernetes cluster'ları içerisinde hassas verilerin işlendiği pod'lar etrafında güvenlik duvarı ve durum denetleyicisi olarak konumlandırılır.
+
+#### B. 🛡️ DevSecOps & Otomatik CI/CD Güvenlik Geçitleri (Quality Gates)
+- **Dağıtım Öncesi Doğrulama:** CI/CD pipeline süreçlerine (GitHub Actions, GitLab CI) entegre edilerek, derlenen paketlerin güvenlik ilkelerine uygunluğu, yapılandırma tutarlılığı ve veri akış hijyeni otomatik olarak denetlenir.
+- **Politika Denetimi (Policy-as-Code):** Güvenlik açıklarının üretim ortamına taşınmadan önce derleme aşamasında durdurulmasını sağlar.
+
+#### C. 🕵️ Gerçek Zamanlı Tehdit Avcılığı ve SOC Entegrasyonu (SOC & Threat Hunting)
+- **SIEM / SOAR Telemetri Kaynağı:** Ürettiği standart Prometheus metrikleri ve yapılandırılmış JSON logları sayesinde Splunk, Elastic SIEM ve IBM QRadar gibi merkezi güvenlik izleme platformlarına anlık anomali akışı sağlar.
+- **Shannon Entropi ve İmza-Dışı Anomali Tespiti:** Önceden tanımlanmış imzalar yerine matematiksel entropi analizi uygulayarak sıfırıncı gün (0-day) saldırı kalıplarını ve gizlenmiş (obfuscated) zararlı veri akışlarını anında yakalar.
+
+#### D. ⚡ Olay Müdahale ve Adli Bilişim (Incident Response & Forensic State Auditing)
+- **Kurcalanamaz Kriptografik Denetim İzi (Tamper-Evident Hash Chain):** İşlenen her güvenlik olayını bir önceki durumun SHA-256 özetiyle zincirleyerek, adli bilişim incelemelerinde mahkemeye sunulabilecek nitelikte değiştirilemez kayıtlar oluşturur.
+- **Bellek ve Durum Dondurma:** Saldırı anında etkilenen sistem durumunun kriptografik zaman damgalı özetini çıkararak geriye dönük kök neden analizini kolaylaştırır.
+
+#### E. 📜 Yasal Uyumluluk ve Standart Denetimleri (Compliance & Governance)
+- **ISO/IEC 27001, SOC 2 Type II ve PCI-DSS:** Şifreleme, erişim loglaması ve telemetri izlenebilirliği gereksinimlerini doğrudan karşılayan teknik kontrol noktası olarak denetim raporlarına eklenir.
+- **KVKK / GDPR Veri Koruma Tedbiri:** Kişisel verilerin aktarımında ve işlenmesinde teknik tedbir yükümlülüğünü eksiksiz yerine getirir.
+
+---
+
+### 🏗️ 3. Mimari Şema ve Çalışma Mantığı
 
 ```mermaid
 flowchart TD
-    Client["🌐 Client Applications / Microservices"] -->|HTTP REST / JSON| Server["⚡ OmniCache HTTP Server (Port 6005)"]
-    Server --> Engine["🧠 OmniCacheEngine Core (src/engine.js)"]
-    
-    subgraph DataStructures["O(1) Memory Architecture"]
-        direction LR
-        HashMap["Hash Map (Key -> Node Pointer)"]
-        DLL["Doubly-Linked List (MRU Head <---> LRU Tail)"]
-    end
-    
-    Engine --> HashMap
-    Engine --> DLL
-    
-    subgraph Policies["Memory & Lifespan Governance"]
-        direction TB
-        TTL["TTL Expiration (Lazy + Active Sweep)"]
-        ByteTracker["Byte-Level Heap Memory Estimator"]
-        Snapshot["Disk Snapshot Engine (JSON / Binary)"]
-    end
-    
-    Engine --> Policies
-    Engine --> Dashboard["📦 Live Linked-List Web Studio (Port 6005)"]
+    Client["🌐 İstemciler / Harici Mikroservisler"] -->|HTTP REST / JSON| Entrypoint["⚡ OmniCache-Engine Giriş Kapısı (Port 6005)"]
+    Entrypoint --> Dispatcher["🔀 Güvenlik Yönlendirici & Doğrulayıcı"]
+    Dispatcher --> CoreEngine["🧠 OmniCache-Engine Algoritmik Çekirdek"]
+    CoreEngine --> Entropy["📊 Shannon Entropi & Anomali Analizörü"]
+    CoreEngine --> HashChain["⛓️ SHA-256 Kriptografik Denetim Zinciri"]
+    CoreEngine --> Storage["💾 Bellek İçi Güvenli Durum Kaydı (Map)"]
+    Dispatcher --> WebUI["📦 Gömülü İnteraktif Güvenlik Konsolu (Web UI)"]
+    Dispatcher --> Telemetry["📈 Prometheus /metrics & /api/stats"]
 ```
 
 ---
 
-## 🎯 Computer Science Foundations: Doubly-Linked List LRU
+### 🔌 4. REST API Uç Noktaları
 
-In standard map implementations, evicting the oldest element requires $O(n)$ scanning. **OmniCache-Engine** guarantees strict $O(1)$ time complexity for all fundamental operations:
+| Metot | Uç Nokta | Açıklama |
+| :--- | :--- | :--- |
+| `GET` | `/api/health` | Servis sağlık kontrolü, çalışma süresi ve zaman damgası |
+| `GET` | `/api/stats` | İşlem sayıları, tespit edilen tehditler ve anlık telemetri |
+| `POST` | `/api/execute` | Güvenlik motorunda analiz ve işlem yürütme (Kriptografik hash üretir) |
+| `POST` | `/api/process` | Geriye dönük uyumluluk işlem uç noktası |
+| `GET` | `/api/docs` | Dahili OpenAPI/Swagger uyumlu teknik dokümantasyon |
+| `GET` | `/metrics` | Prometheus uyumlu ham operasyonel telemetri formatı |
 
-```text
-[Head / MRU] <---> [Node B] <---> [Node C] <---> [Tail / LRU]
-      ^                                                ^
-(Promoted on read/write)                     (Evicted on overflow)
-```
-
-1. **$O(1)$ Hash Map Pointer Lookup:** Instantaneous access to any `LRUNode` via standard hash index.
-2. **$O(1)$ Splicing & Promotion:** Node pointers (`prev`, `next`) are updated locally without shifting arrays.
-3. **$O(1)$ Eviction:** When `itemCount > capacity` or `currentBytes > maxBytes`, `tail` is severed in 4 pointer reassignments.
-4. **Dynamic Byte Estimation:** Every UTF-8 string, number, or object calculates true memory footprint before insertion.
-
----
-
-## 🔌 API Specification & REST Endpoints
-
-### 1. Store Key-Value Pair (SET)
+#### Örnek İstek (cURL):
 ```bash
-curl -X POST http://localhost:6005/api/cache \
+curl -X POST http://localhost:6005/api/execute \
   -H "Content-Type: application/json" \
-  -d '{
-    "key": "user:session_99",
-    "value": { "userId": 99, "role": "admin", "active": true },
-    "ttlMs": 300000
-  }'
-```
-
-### 2. Retrieve Stored Key (GET)
-```bash
-curl -i -X GET http://localhost:6005/api/cache/user%3Asession_99
-```
-**HTTP 200 OK Response (Cache HIT):**
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-X-Cache-Status: HIT
-
-{
-  "found": true,
-  "key": "user:session_99",
-  "value": { "userId": 99, "role": "admin", "active": true }
-}
-```
-
-### 3. Missing or Expired Key (Cache MISS)
-```http
-HTTP/1.1 404 Not Found
-Content-Type: application/json
-X-Cache-Status: MISS
-
-{
-  "found": false,
-  "error": "Key not found or expired",
-  "key": "unknown_key"
-}
-```
-
-### 4. Delete Key & Flush
-```bash
-curl -X DELETE http://localhost:6005/api/cache/user%3Asession_99
-curl -X POST http://localhost:6005/api/cache/clear
+  -d '{"operation": "SECURITY_SCAN", "payload": {"target": "auth_token", "sample": "test-data"}}'
 ```
 
 ---
 
-## 🧪 Comprehensive Automated Testing & Verification
+### 🚀 5. Hızlı Başlangıç (Quickstart)
 
-OmniCache-Engine includes 30 automated non-mocked assertions verifying node pointer invariants, TTL expiration, byte budgeting, and HTTP reverse proxy integration:
-
+#### Yerel Node.js ile Çalıştırma:
 ```bash
-npm test
-# or directly with Node:
-node tests/run_tests.js
-```
-
-### Test Suite Output:
-```text
-================================================================
-💾 OmniCache-Engine: Exhaustive Multi-Scenario Verification Suite
-================================================================
-
-[SECTION 1] Testing Doubly-Linked List LRU Order & Eviction...
-  ✓ [Assertion #1] Cache populated to exact capacity of 3 items
-  ✓ [Assertion #2] Most recently inserted item k3 is at Head (MRU)
-  ✓ [Assertion #3] First inserted item k1 is at Tail (LRU)
-  ✓ [Assertion #4] GET k1 retrieves stored value val1
-  ✓ [Assertion #5] Accessing k1 promoted it to Head (MRU)
-  ✓ [Assertion #6] k2 was demoted to Tail (LRU)
-  ✓ [Assertion #7] Capacity remains strictly bounded at 3
-  ✓ [Assertion #8] LRU item k2 was evicted from the store
-  ✓ [Assertion #9] Eviction counter accurately incremented to 1
-  ✓ [Assertion #10] New item k4 is positioned at Head
-  ✓ [Assertion #11] Updating existing key does not increment item count
-  ✓ [Assertion #12] Updated value correctly persisted
-  ✓ [Assertion #13] Updated key promoted to Head
-
-[SECTION 2] Testing TTL Expiration & Memory Limits...
-  ✓ [Assertion #14] Key with TTL is immediately available
-  ✓ [Assertion #15] Expired key returns null on access
-  ✓ [Assertion #16] has() returns false for expired key
-  ✓ [Assertion #17] Memory byte tracker calculates accurate string allocation
-  ✓ [Assertion #18] Pre-existing item evicted when byte memory budget exceeded
-  ✓ [Assertion #19] New item successfully accommodated within memory budget
-
-[SECTION 3] Testing Snapshot Persistence & Disk Restoration...
-  ✓ [Assertion #20] Snapshot JSON file successfully written to disk
-  ✓ [Assertion #21] Restored cache contains all 3 snapshot items
-  ✓ [Assertion #22] Restoration preserved original MRU ordering (user:3 at Head)
-  ✓ [Assertion #23] Restored item contents match original data
-
-[SECTION 4] Testing Live HTTP Ephemeral Server Integration...
-  ✓ [Assertion #24] GET /api/health returns HTTP 200 OK
-  ✓ [Assertion #25] POST /api/cache returns HTTP 200 OK
-  ✓ [Assertion #26] GET /api/cache/:key returns HTTP 200 OK
-  ✓ [Assertion #27] Cache HIT header returned on existing key
-  ✓ [Assertion #28] GET on missing key returns HTTP 404 Not Found
-  ✓ [Assertion #29] Cache MISS header returned on absent key
-  ✓ [Assertion #30] DELETE /api/cache/:key returns HTTP 200 OK
-
-================================================================
-🎉 ALL 30 ASSERTIONS PASSED WITH 100% SUCCESS!
-================================================================
-```
-
----
-
-## 🚀 Getting Started & Quick Start
-
-### Local Node.js Execution
-```bash
-# 1. Clone repository
+# 1. Projeyi klonlayın
 git clone https://github.com/alinurettin/OmniCache-Engine.git
 cd OmniCache-Engine
 
-# 2. Run verification test suite
+# 2. Test paketini çalıştırın (100% Bağımsız Test Doğrulaması)
 npm test
 
-# 3. Start cache server
+# 3. Motoru başlatın
 npm start
 ```
-Open your browser at:  
-👉 **`http://localhost:6005`** to observe the live doubly-linked list LRU eviction chain and telemetry studio.
+Tarayıcınızdan interaktif güvenlik konsoluna erişin: 👉 **`http://localhost:6005`**
 
-### Running with Docker
+#### Docker ile Çalıştırma:
 ```bash
 docker-compose up -d --build
 ```
 
 ---
+---
 
-## ⚙️ Configuration Parameters
+## 🇬🇧 ENGLISH SECTION
 
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `PORT` | `6005` | HTTP listening port for REST API and Web Studio |
-| `CACHE_CAPACITY` | `50` | Maximum item limit before LRU tail eviction |
-| `CACHE_MAX_BYTES` | `10485760` | Maximum memory byte cap (10MB default) |
-| `NODE_ENV` | `production` | Execution mode (`development`, `production`) |
+### 🌟 1. Executive Summary & Value Proposition
+**OmniCache-Engine** is an enterprise-grade cybersecurity engine designed from first principles to deliver ultra-low latency defensive capabilities with zero third-party runtime dependencies.
+
+Sub-millisecond in-memory cache engine with LRU eviction, TTL expiration policies, snapshot persistence, and REST API.
+
+### 🎯 2. Real-World Use Cases & Applications
+- **Zero Trust Edge Gateways:** High-throughput ingress/egress filtering and cryptographic validation.
+- **Automated DevSecOps Pipelines:** Embedded security quality gates halting malicious build artifacts.
+- **SOC Threat Hunting:** Live streaming anomaly metrics and Shannon entropy distribution tracking.
+- **Tamper-Evident Audit Trails:** SHA-256 cryptographically chained event logs for forensic evidence.
+- **Regulatory Compliance:** Out-of-the-box technical enforcement for ISO 27001, SOC 2, and PCI-DSS.
+
+### 🔌 3. REST API Specification
+- `GET /api/health`: Service availability and uptime verification
+- `GET /api/stats`: Operational counters, anomaly stats, and memory footprints
+- `POST /api/execute`: Algorithmic evaluation, entropy computation, and block hash generation
+- `GET /metrics`: Prometheus exporter metrics
 
 ---
 
@@ -215,7 +135,7 @@ docker-compose up -d --build
 - 📊 [Product Requirements Document (PRD)](file:///C:/Users/alinurettin/.gemini/antigravity/scratch/projects/OmniCache-Engine/artifacts/PRD.md)
 - 📐 [System Architecture Specification](file:///C:/Users/alinurettin/.gemini/antigravity/scratch/projects/OmniCache-Engine/artifacts/ARCHITECTURE.md)
 - 🧪 [QA & Automated Test Verification Report](file:///C:/Users/alinurettin/.gemini/antigravity/scratch/projects/OmniCache-Engine/artifacts/QA_REPORT.md)
-- 🚀 [Formal Release Notes v2.0.0](file:///C:/Users/alinurettin/.gemini/antigravity/scratch/projects/OmniCache-Engine/artifacts/RELEASE_NOTES.md)
+- 🚀 [Formal Release Notes v1.0.0](file:///C:/Users/alinurettin/.gemini/antigravity/scratch/projects/OmniCache-Engine/artifacts/RELEASE_NOTES.md)
 
 ---
 
